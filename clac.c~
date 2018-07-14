@@ -1,0 +1,336 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <ctype.h>
+#include <string.h>
+/*deffinitions*/
+#define true 1
+#define false 0
+enum eCode{ NUMB, OPP, NUMB_FORMAT,OUT_FORMAT, SIZE }; 
+/*functional prototypes*/
+
+int badFormat(int n, char** args);
+void printError(int err);
+int notOpp(char* opp);
+int isLength(int n , char * str);
+void printArgs(int n, char** argv);
+int goodNumForm(char* arg);
+int goodOutFromat(char* arg);
+int isNary(int n, char* str);
+
+void flipStr(int l, char* str);
+char** copyStrings(int n, char** argsN, char** argsO);
+void freeStrings(int n, char ** v);
+void setStrsToLower(int n,char ** strv);
+
+long strToInt(char* str); 
+int charToInt(char c);
+int getBase(char c);
+char* intToStr(long x, char c);
+
+int unitTest();
+
+int main(int n, char** args ){
+  if (!unitTest()){
+    printf("Failed my crappy unit testing");
+    //return 1;
+  }
+
+  long a ,b, c;
+  
+  char** localArgs;//made local copy so they are editable
+  localArgs = copyStrings(n , localArgs, args);
+  setStrsToLower(n,localArgs);//told you i wanted to edit them!
+  if(badFormat(n, localArgs)){
+    return 1;
+  }
+
+  a = strToInt(localArgs[2]);
+  b = strToInt(localArgs[3]);
+
+  if(localArgs[1][0] == '+'){
+    c = a+b;
+  } else if(localArgs[1][0] == '-'){
+    c = a-b;
+  } else if(localArgs[1][0] == '*'){
+    c = a*b;
+  } 
+
+  printf("%ld %s %ld is %s\n",a, args[1], b,intToStr(c, localArgs[4][0]));
+  // printf("%ld %s %ld is %ld\n",a, args[1], b,c);
+
+
+
+  
+  return 0;
+}
+
+
+int badFormat(int n, char** args){
+  if(args == NULL ||n!= 5){//wrong number of args
+    printError(NUMB);
+    return true;
+  }
+  //TODO set args to lower 
+  
+  if(notOpp(args[1])){// cannot recogize opperator
+    printError(OPP);
+    return true;
+  }
+  if(!(goodNumForm(args[2]) && goodNumForm(args[3]))){// bad number format 
+    printError(NUMB_FORMAT);
+    return true;
+  }
+  if(!goodOutFromat(args[4])){//check for supported output specifyer
+    printError(OUT_FORMAT);
+    return true;
+  }
+  if(false /*detect size problems*/){
+    printError(SIZE);
+    return true;
+  }
+     
+  return false; //fall through, no problems dettected
+}
+
+void printError(int err){
+  printf("ERROR ");
+
+  switch (err){
+
+  case NUMB:
+    printf("Wrong number of args, follow format <opp> <numb1> <nub2> <output format>\n");
+    break;
+  case OPP:
+    printf("unrecognized opp, please use + , - or *\n");
+    break;
+  case NUMB_FORMAT:
+    printf("Bad number format, check specifyer and digits, please use (b|o|d|x)-------\n");
+    break;
+  case OUT_FORMAT:
+    printf("BAD output format, please use (b|o|d|x)\n ");
+    break;
+  Default:
+    printf("unknow error code in print error function");
+  }
+}
+
+
+int notOpp(char* opp){
+  if(opp == 0) return true;
+  if(!isLength(1, opp)) return true;
+  if(opp[0]=='-') return false;
+  if(opp[0]=='+') return false;
+  if(opp[0]=='*') return false;
+  
+  return true;// fall through
+}
+
+
+int isLength(int n , char * str){
+  int i = 0;
+  for( ; str[i]; i++){
+    if( i+1>n) return false ;
+  }
+  //printf("i is %d, n is %d\n",i,n);
+  return i == n;
+}
+
+
+void printArgs(int n, char** argv){
+  for(int i =0 ; i<n;i++){
+    printf("%s\n",argv[i]);
+  }
+
+
+}
+
+
+
+int goodNumForm(char* arg){
+  if(arg == 0) return false; 
+
+  switch(arg[0]){
+
+  case 'b':
+    return isNary(2,arg+1);
+  case 'o':
+    //check octal
+    return isNary(8, arg+1);
+  case 'd':
+    //check decmial format
+    if(arg[1]== '-') return  isNary(10,arg+2);  //check for minus
+    return isNary(10, arg+1);
+  case 'x':
+    //checl hexadecmial
+    return isNary(16, arg+1);  
+  }
+  //fall through, did not find proper format specifier 
+  return false;
+}
+
+
+
+int goodOutFromat(char* arg){
+  if(arg == 0) return false;
+  if(!isLength(1,arg)) return false;
+  if(arg[0]== 'b') return true;
+  if(arg[0] == 'd') return true;
+  if( arg[0] == 'o') return true;
+  if( arg[0] == 'x') return true; 
+  return false; 
+  
+}
+
+
+int isNary(int n,char* str){
+  if(str == 0) return false;
+
+  for(;*str; str++){
+    if(charToInt(*str)<0) return false;
+    if(charToInt(*str)>=n) return false;
+  }
+
+  return true; //fall through no problems found
+}
+
+int charToInt(char c){
+  if('0'<=c && c <= '9'){
+    return c-'0';
+  }
+  if('a'<=c && c <= 'f'){
+    return 10+c-'a';
+  }
+
+  return -1;// error 
+}
+
+
+long  strToInt(char* str){
+  long rtnVal = 0;
+  int mult = 1;
+  
+  int base=  getBase(str[0]);
+  if(str[0]=='-'){
+    mult = -1;
+    str++;
+  }
+  
+  str++;
+  for( ; *str; str++){
+    rtnVal = rtnVal*base+charToInt(*str);
+  }
+  return mult*rtnVal;
+
+}
+
+
+int getBase(char c){
+  switch(c){
+  case 'b':
+    return 2;
+  case 'o':
+    return 8;
+  case 'd':
+    return 10;
+  case 'x':
+    return 16;
+  Default:
+    return -1; 
+  }
+
+}
+
+
+char* intToStr(long x, char c){
+  int base = getBase(c);
+  char* str = malloc(sizeof(char)*65);
+  int i = 0;
+  int neg =1;
+  if(c == 'd' && x<0) {
+    x*=-1;
+    neg = -1;
+  }
+
+  
+  if(x ==0 ){
+    str[i++] ='0';
+  }else{
+    while((unsigned long)x > 0){
+      int diff = x%((unsigned long)base); 
+      if(diff <10) str[i] = diff+'0';
+      else str[i] = diff-10+'a';
+      x /= ((unsigned long)base);
+      i++;
+    }
+  }
+  if(c =='d' && neg <0) str[i++] = '-';
+  str[i++] = c;
+  str[i] = 0;
+  flipStr(i, str);
+  return str;
+}
+
+
+
+void flipStr( int l, char* str){
+  int i = --l;
+
+  for( ; i>l/2; i--){
+    char temp = str[i];
+    str[i] = str[l-i];
+    str[l-i] = temp;
+  }
+
+}
+
+
+void setStrsToLower(int n, char ** strv){
+  for(int i = 0; i< n; i++){
+    for(char* p = strv[i]; *p; p++){
+      *p =tolower(*p);
+      //printf("%c\n",*p);
+    }
+  }
+}
+
+char** copyStrings(int n, char** argsN, char** argsO){
+  argsN = malloc(sizeof(char*)*n);
+  for(int i = 0; i< n; i++){
+   argsN[i]= malloc(sizeof(char)*(strlen(argsO[i]+1)));
+    strcpy(argsN[i], argsO[i]);
+    // printf("%s\n", argsN[i]);
+  }
+  return argsN;
+}
+
+void freeStrings(int n, char ** v){
+  for(int i = 0; i <n; i++){
+    free(v[i]);
+  }
+  free(v);
+}
+
+
+int unitTest(){
+  //printf("%ld\n",0x8000000000000000-1);
+
+  long x = 0x8000000000000001;
+  printf("a:%ld\n",x);
+  x *= -1;
+  printf("b:%ld\n",x);
+  for( long  i = /*0x8000000000000000*/ -100000; i<=100000/*9223372036854775807*/; i++){
+    char* str =intToStr (i,'d') ;
+    if(i !=  strToInt(intToStr(i,'d'))){
+      printf("String: , %s\n",str  );
+      printf("back to int, %ld\n", strToInt(str) );
+      printf("input, %ld\n", i);
+      return false;
+    }
+    free(str);
+
+  }
+
+  printf("passed unit testing\n");
+  return true;
+
+}

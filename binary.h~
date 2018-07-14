@@ -1,0 +1,11 @@
+#ifndef BINARY_H_
+#define BINARY_h_
+
+
+long strToInt(char* str); 
+int charToInt(char c);
+int getBase(char c);
+char* intToStr(long x, char c);
+
+
+#endif

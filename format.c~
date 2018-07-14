@@ -1,0 +1,18 @@
+#include <stdio.h>
+
+typedef union intFloat{
+  int i;
+  float f;
+}infFloat; 
+
+
+int main(int n, char** args){
+  union intFloat bob;
+  bob.i = 0xf0000000;
+  // bob.f = 99.9;
+  float f = 99.9;
+  printf("%d\n", bob.i);
+  printf("%.6f\n", bob.f);
+  printf("%.6f\n", (float)boyb.i);
+
+}

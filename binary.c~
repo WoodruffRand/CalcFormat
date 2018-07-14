@@ -1,0 +1,61 @@
+
+int isNary(int n,char* str){
+  if(str == 0) return false;
+
+  for(;*str; str++){
+    if(charToInt(*str)<0) return false;
+    if(charToInt(*str)>=n) return false;
+  }
+
+  return true; //fall through no problems found
+}
+
+
+long  strToInt(char* str){
+  long rtnVal = 0;
+  int mult = 1;
+  
+  int base=  getBase(str[0]);
+  if(str[1]=='-'){
+    mult = -1;
+    str[1] ='d';
+    str++;
+  }
+  
+  str++;
+  for( ; *str; str++){
+    rtnVal = rtnVal*base+charToInt(*str);
+  }
+  return mult*rtnVal;
+
+}
+
+
+char* intToStr(long x, char c){
+  int base = getBase(c);
+  char* str = malloc(sizeof(char)*65);
+  int i = 0;
+  int neg =1;
+  if(c == 'd' && x<0) {
+    x*=-1;
+    neg = -1;
+  }
+
+  
+  if(x ==0 ){
+    str[i++] ='0';
+  }else{
+    while((unsigned long)x > 0){
+      int diff = x%((unsigned long)base); 
+      if(diff <10) str[i] = diff+'0';
+      else str[i] = diff-10+'a';
+      x /= ((unsigned long)base);
+      i++;
+    }
+  }
+  if(c =='d' && neg <0) str[i++] = '-';
+  str[i++] = c;
+  str[i] = 0;
+  flipStr(i, str);
+  return str;
+}
